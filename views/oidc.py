@@ -4,7 +4,7 @@ import bottle
 import requests
 import jwt
 
-from config import client_id, client_secret
+import config
 
 PUBLIC_ROUTES = ["/login", "/callback"]
 
@@ -13,10 +13,10 @@ def login():
     params = {
         "scope": "openid",
         "response_type": "code",
-        "client_id": client_id,
+        "client_id": config.client_id,
         "redirect_uri": "http://localhost:8000/callback",
     }
-    url = "http://localhost:8080/auth/realms/dospro/protocol/openid-connect/auth?" + urlencode(params)
+    url = f"{config.oidc_server_base_url}/auth?" + urlencode(params)
 
     return bottle.redirect(url)
 
@@ -25,23 +25,23 @@ def callback():
     code = bottle.request.GET['code']
     payload = {
         "code": code,
-        "client_id": client_id,
-        "client_secret": client_secret,
+        "client_id": config.client_id,
+        "client_secret": config.client_secret,
         "grant_type": "authorization_code",
         "redirect_uri": "http://localhost:8000/callback",
     }
     result = requests.post(
-        "http://localhost:8080/auth/realms/dospro/protocol/openid-connect/token",
+        f"{config.oidc_server_base_url}/token",
         data=payload
     )
     result.raise_for_status()
     jwt_token = result.json()["id_token"]
-    jwks_client = jwt.PyJWKClient("http://localhost:8080/auth/realms/dospro/protocol/openid-connect/certs")
+    jwks_client = jwt.PyJWKClient(f"{config.oidc_server_base_url}/certs")
     decoded_token = jwt.decode(
         jwt_token,
         jwks_client.get_signing_key_from_jwt(jwt_token).key,
         algorithms=["RS256"],
-        audience=client_id
+        audience=config.client_id
     )
     print(decoded_token)
     bottle.response.content_type = "application/json"

@@ -1,0 +1,27 @@
+version: '3'
+services:
+  db:
+    image: postgres:11.1
+    container_name: 'local-kc-postgresql'
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: 'local'
+      POSTGRES_PASSWORD: 'password'
+      POSTGRES_DB: 'keycloak'
+  keycloak:
+    image: jboss/keycloak:15.0.0
+    container_name: 'keycloak'
+    links:
+      - db:postgres
+    ports:
+      - 8080:8080
+    depends_on:
+      - db
+    environment:
+      KEYCLOAK_USER: 'dospro'
+      KEYCLOAK_PASSWORD: 'password'
+      DB_USER: 'local'
+      DB_PASSWORD: 'password'
+      DB_VENDOR: 'postgres'
+      DB_ADDR: 'postgres'
