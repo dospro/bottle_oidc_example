@@ -55,6 +55,9 @@ def logout():
 
 
 class OIDCPlugin:
+    name = "OIDC Plugin"
+    api = 2
+
     def __init__(self):
         pass
 
@@ -63,11 +66,10 @@ class OIDCPlugin:
         app.route('/callback', method='get', callback=callback)
         app.route('/logout', method='get', callback=logout)
 
-    def apply(self, func, route):
-        cookie = bottle.request.get_cookie('username', None)
-        is_authenticated = True if cookie else False
-        if is_authenticated or bottle.request.path in PUBLIC_ROUTES:
+    def __call__(self, func):
+        def wrapper(*args, **argv):
+            cookie = bottle.request.cookies.get('username', None)
             bottle.request.user = cookie
-            return func
-        else:
-            return bottle.abort(401, "Sorry, access denied")
+            return func(*args, **argv)
+
+        return wrapper

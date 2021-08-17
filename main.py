@@ -13,7 +13,8 @@ app.install(OIDCPlugin())
 
 @app.route('/', method='get')
 def home():
-    return template("index", name=request.user)
+    user = request.user
+    return template("index", name=user)
 
 
 run(app, host='localhost', port=8000, debug=True, reloader=True)
